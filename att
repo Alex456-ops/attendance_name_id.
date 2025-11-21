@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Attendance System - Name & ID</title>
+</head>
+<body>
+    <h1>Attendance Registration (Name & ID)</h1>
+  
+    Name: <input type="text" id="nameInput" placeholder="Enter your name">
+    ID: <input type="text" id="idInput" placeholder="Enter your ID">
+    <button onclick="addAttendance()">Submit</button>
+    <br><br>
+    <!-- Hidden admin section -->
+    <div style="display:none;" id="adminSection">
+        Admin Password: <input type="password" id="adminPassword">
+        <button onclick="clearAttendance()">Clear List (Admin Only)</button>
+    </div>
+    
+    <h2>Present:</h2>
+    <ul id="attendanceList"></ul>
+
+    <script>
+        let attendance = JSON.parse(localStorage.getItem('attendance')) || [];
+        const attendanceList = document.getElementById('attendanceList');
+        const ADMIN_PASS = 'mypassword123';
+        const adminSection = document.getElementById('adminSection');
+
+        function updateList() {
+            attendanceList.innerHTML = '';
+            attendance.forEach(item => {
+                const li = document.createElement('li');
+                li.textContent = `Name: ${item.name}, ID: ${item.id} - ${item.time}`;
+                attendanceList.appendChild(li);
+            });
+        }
+
+        function addAttendance() {
+            const name = document.getElementById('nameInput').value.trim();
+            const id = document.getElementById('idInput').value.trim();
+            if (!name || !id) { alert("Please enter both Name and ID!"); return; }
+
+            if (!attendance.some(item => item.name === name && item.id === id)) {
+                const now = new Date();
+                attendance.push({name, id, time: now.toLocaleString()});
+                localStorage.setItem('attendance', JSON.stringify(attendance));
+                updateList();
+                document.getElementById('nameInput').value = '';
+                document.getElementById('idInput').value = '';
+            } else {
+                alert(`The record for Name: ${name}, ID: ${id} already exists!`);
+            }
+        }
+
+        function showAdmin() {
+            const password = prompt("Enter admin password to unlock deletion:");
+            if (password === ADMIN_PASS) adminSection.style.display = 'block';
+            else alert("Incorrect password!");
+        }
+
+        function clearAttendance() {
+            const password = document.getElementById('adminPassword').value;
+            if (password === ADMIN_PASS) {
+                if (confirm("Are you sure you want to clear all attendance records?")) {
+                    attendance = [];
+                    localStorage.removeItem('attendance');
+                    updateList();
+                    document.getElementById('adminPassword').value = '';
+                }
+            } else { alert("Incorrect password! Only the admin can clear the list."); }
+        }
+
+        updateList();
+        document.addEventListener('keydown', e => { if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'a') showAdmin(); });
+    </script>
+    <p>Enter your <strong>Name</strong> and <strong>ID</strong> above and press Submit.</p>
+    <p>Press <strong>Ctrl+Shift+A</strong> to unlock admin options.</p>
+</body>
+</html>
